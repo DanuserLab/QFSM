@@ -5,4 +5,7 @@ QFSM (Quantitative Fluorescent Speckle Microscopy) is a MATLAB software for quan
 
 For more information, please see Mendoza et al., Current Protocols in Cytometry 62:2.18.1–2.18.26 (2012). 
 
+----------------------
+[Danuser Lab Website](https://www.utsouthwestern.edu/labs/danuser/)
 
+[Software Links](https://www.utsouthwestern.edu/labs/danuser/software/)
