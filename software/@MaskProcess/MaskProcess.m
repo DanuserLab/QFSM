@@ -2,7 +2,7 @@ classdef MaskProcess < Process
     % Abstract interface for all mask-related processes (segmentation,
     % morphological operations)
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -108,9 +108,9 @@ classdef MaskProcess < Process
             ip.addRequired('obj');
             ip.addRequired('iChan', @obj.checkChanNum);
             ip.addRequired('iFrame', @obj.checkFrameNum);
-            if obj.owner_.is3D()
+%             if obj.owner_.is3D()
                 ip.addOptional('iZ', [], @obj.checkDepthNum);
-            end
+%             end
             ip.addParamValue('output',[],@ischar);            
             ip.parse(obj,iChan,iFrame,varargin{:})
             maskNames = obj.getOutMaskFileNames(iChan);

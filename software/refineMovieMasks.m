@@ -79,7 +79,14 @@ function movieData = refineMovieMasks(movieDataOrProcess,paramsIn)
 %           If true, any holes in any objects in the mask will be filled
 %           in.
 %           Optional. Default is true.
-%
+%          
+%           ('FillBoundaryHoles' -> True/False)
+%           If true, if the mask is touching the image boundary on adjacent edges of the 
+%           image, the hole in between the two image-edge-touching boundaries (e.g., in the corner) 
+%           will be filled. 
+%           If fasle, this space will not be filled.
+%           Optional. Default is true.
+%            
 %           ('OpeningRadius -> non-negative integer scalar)
 %           If this parameter is greater than zero, the mask will be eroded
 %           then dilated using a disk-shaped structuring element of this radius. This
@@ -123,10 +130,11 @@ function movieData = refineMovieMasks(movieDataOrProcess,paramsIn)
 % 
 % Hunter Elliott 
 % 1/2010
+% Andrew R. Jamieson 6/2018 - Updated boundary hole filling behaviour
 %
 %% -------- Parameters ---------- %%
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -381,17 +389,15 @@ for iChan = 1:nChanThresh
         
         % ------ Hole-Filling ----- %
         if p.FillHoles
-            
-            %If the mask touches the image border, we want to close holes
-            %which are on the image border. We do this by adding a border
-            %of ones on the sides where the mask touches.
-            if any([currMask(1,:) currMask(end,:) currMask(:,1)' currMask(:,end)'])                
+            % If the mask touches the image border, we want to close holes
+            % which are on the image border. We do this by adding a border
+            % of ones on the sides where the mask touches. (if FillBoundaryHoles is True)
+            if p.FillBoundaryHoles && any([currMask(1,:) currMask(end,:) currMask(:,1)' currMask(:,end)'])                
                 m = movieData.imSize_(1);
                 n = movieData.imSize_(2);            
                 %Add a border of 1s
                 tmpIm = vertcat(true(1,n+2),[true(m,1) ...
                                 currMask true(m,1)],true(1,n+2));
-                
                 %Find holes - the largest "hole" is considered to be the
                 %background and ignored.
                 cc = bwconncomp(~tmpIm,4);                                
@@ -401,11 +407,21 @@ for iChan = 1:nChanThresh
                 tmpIm(cc.PixelIdxList{iBiggest}) = false;
                 currMask = tmpIm(2:end-1,2:end-1);
              else                        
-                 currMask = imfill(currMask,'holes');
-             end
+                % Check if touching border, if so, add zeros all around first, then fill holes
+                % to prevent filling in holes along boundary.
+                if any([currMask(1,:) currMask(end,:) currMask(:,1)' currMask(:,end)'])
+                    %Add a border of 1s
+                    m = movieData.imSize_(1);
+                    n = movieData.imSize_(2);
+                    tmpIm = vertcat(false(1,n+2),[false(m,1) ...
+                                currMask false(m,1)],false(1,n+2));
 
-            
-            
+                    tmpIm = imfill(tmpIm,'holes');
+                    currMask = tmpIm(2:end-1,2:end-1);
+                else               
+                    currMask = imfill(currMask,'holes');
+                end
+             end
         end
         
         if p.SuppressBorder

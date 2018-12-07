@@ -8,7 +8,7 @@ classdef ImageAnalysisProcess < Process
     % Hunter Elliott, 7/2010
     %
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

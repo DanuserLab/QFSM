@@ -16,7 +16,7 @@ function [Imin,deltaI,k,sigmaDiff,sigmaMax,sigmaMin,status]=testSpeckleSignifica
 % References:
 % A. Ponti et al., Biophysical J., 84 336-3352, 2003.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

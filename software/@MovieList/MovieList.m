@@ -1,7 +1,7 @@
 classdef MovieList < MovieObject
     % Concrete implementation of MovieObject for a list of movies
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -213,6 +213,11 @@ classdef MovieList < MovieObject
                 omeroSave(ML);
             end
         end
+        
+        % Override arithmetic operations to faciliate combining movie lists
+        C = plus(A,B,outputDirectory);
+        C = minus(A,B,outputDirectory);
+        
     end
     
     methods(Static)
@@ -255,6 +260,12 @@ classdef MovieList < MovieObject
         function [obj, filepath] = loadMatFile(filepath)
             % Load a movie list from a local MAT file
             [obj, filepath] = MovieObject.loadMatFile('MovieList', filepath);
+            obj.movies_=cell(1,length(obj.movieDataFile_));
+            for mIdx=1:length(obj.movieDataFile_)
+                if(exist(obj.movieDataFile_{mIdx}))
+                    obj.movies_{mIdx}=MovieData.loadMatFile(obj.movieDataFile_{mIdx});
+                end
+            end
         end
         
         function status=checkValue(property,value)
@@ -294,5 +305,8 @@ classdef MovieList < MovieObject
         function propName = getFilenameProperty()
             propName = 'movieListFileName_';
         end
+        
+        % Use Regular expression to build a movie list by scanning dirs
+        ML = buildByRegexp(filter,outputDirectory);
     end
 end

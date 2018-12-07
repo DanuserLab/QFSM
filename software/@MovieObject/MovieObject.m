@@ -2,7 +2,7 @@ classdef  MovieObject < hgsetget
     % Abstract interface defining the analyis tools for movie objects
     % (movies, movie lists...)
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -46,9 +46,9 @@ classdef  MovieObject < hgsetget
         function set.outputDirectory_(obj, path)
             % Set the ouput
             endingFilesepToken = [regexptranslate('escape',filesep) '$'];
-            path = regexprep(path,endingFilesepToken,'');
-            obj.checkPropertyValue('outputDirectory_',path);
-            obj.outputDirectory_=path;
+            aPath = regexprep(path,endingFilesepToken,'');
+            obj.checkPropertyValue('outputDirectory_',aPath);
+            obj.outputDirectory_=aPath;
         end
         
         function checkPropertyValue(obj,property, value)
@@ -215,13 +215,159 @@ classdef  MovieObject < hgsetget
             assert(isa(newprocess,'Process'));
             obj.processes_ = horzcat(obj.processes_, {newprocess});
         end
-        
-        function proc = getProcess(obj, i)
-            % Return process corresponding to the specified index
-            assert(insequence_and_scalar(i,1,numel(obj.processes_)), ['Process Index [' num2str(i) '] does Not exist!']);
-            proc = obj.processes_{i};
+
+        function [tagList, procList] = getProcessTags(obj)
+            % Retreives all process tags, and proc associated
+            procs = obj.processes_;
+            tagList = [];
+            procList = [];
+            for p = procs
+                if isprop(p{:}, 'tag_')
+                    tagList = [tagList {p{:}.tag_}];
+                    procList = [procList p];
+                end
+            end
+        end
+
+        function [nameList, procList] = getProcessNames(obj)
+            % Retreives all process names, and proc associated
+            procs = obj.processes_;
+            nameList = [];
+            procList = [];
+            for p = procs
+                if isprop(p{:}, 'name_')
+                    nameList = [nameList {p{:}.name_}];
+                    procList = [procList p];
+                end
+            end
+        end
+
+        function [nameList, procList] = getPackageNames(obj)
+            % Retreives all process names, and packs associated
+            packs = obj.packages_;
+            nameList = [];
+            procList = [];
+            for p = packs
+                if isprop(p{:}, 'name_')
+                    nameList = [nameList {p{:}.name_}];
+                    procList = [procList p];
+                else
+                    try 
+                        nameList = [nameList {class(p{:})}];
+                        procList = [procList p];
+                    catch
+                    end
+                end
+            end
+        end
+
+        function [matchingProcs, matchingTags] = searchPackageName(obj, queryStr, varargin)
+            [matchingProcs, matchingTags] = findProcessTag(obj, queryStr,'queryField', 'name', 'findPackage',true,'exactMatch',1,'safeCall',true,varargin{:});
         end
         
+        function [matchingProcs, matchingTags] = findPackageName(obj, queryStr, varargin)
+            [matchingProcs, matchingTags] = findProcessTag(obj, queryStr,'queryField', 'name', 'findPackage',true,'safeCall',false,varargin{:});
+        end
+
+        function [matchingProcs, matchingTags] = searchProcessName(obj, queryStr, varargin)
+            [matchingProcs, matchingTags] = findProcessTag(obj, queryStr,'queryField', 'name', 'findPackage',false,'safeCall',true,varargin{:});
+        end
+
+        function [matchingProcs, matchingTags] = searchProcessTag(obj, queryStr, varargin)
+            [matchingProcs, matchingTags] = findProcessTag(obj, queryStr,'queryField', 'tag', 'findPackage',false,'safeCall',true,varargin{:});
+        end
+
+        function [matchingProcs, matchingTags] = findProcessTag(obj, queryStr,varargin)
+            % return all processes with tag containing the queryStr
+            ip = inputParser;
+            ip.addRequired('queryStr', @ischar);
+            ip.addOptional('exactMatch', 0, @(x) x==0 || x==1 || islogical(x));
+            ip.addOptional('safeCall', false, @islogical);
+            ip.addOptional('queryField', 'tag', @ischar);   % or name
+            ip.addOptional('findPackage', false, @islogical);   % or name
+            ip.addOptional('selectIdx',[],@(x) ischar(x) || isnumeric(x));   % or name
+
+            ip.parse(queryStr, varargin{:});
+            exactMatch = ip.Results.exactMatch;
+            queryStr = ip.Results.queryStr;
+            queryField = ip.Results.queryField;
+            findPackage=ip.Results.findPackage;
+            selectIdx=ip.Results.selectIdx;
+            safeCall=ip.Results.safeCall;
+
+            if ~ischar(queryStr)
+                error('Incorrect tag query type: must be char string');
+            end
+            if(~findPackage)
+                switch(queryField)
+                case 'tag'
+                    [tagList,procList] = obj.getProcessTags;
+                case 'name'
+                    [tagList,procList] = obj.getProcessNames;
+                otherwise
+                    error('Unknown search criteria.');
+                end
+                [matchingProcs, matchingTags] = MovieObject.searchProcessList(procList,tagList,queryField,queryStr,exactMatch,safeCall,selectIdx);
+            else
+                [nameList,packList] = obj.getPackageNames;
+                [matchingProcs, matchingTags] = MovieObject.searchProcessList(packList,nameList,'name',queryStr,exactMatch,safeCall,selectIdx);
+            end
+
+        end
+        
+        function [matchingProcs, matchingTags] = findProcessTagMulti(obj, queryStrList, varargin)
+            % return all processes with tag containing ALL of the str in queryStrList cell set
+            ip = inputParser;
+            ip.addRequired('queryStrList', @iscell);
+            ip.parse(queryStrList, varargin{:});
+            queryStrList = ip.Results.queryStrList;
+
+            [tagList, procList] = obj.getProcessTags;
+            matchingProcs = [];
+            matchingTags = [];
+            if ~(length(queryStrList) == 1)
+                for i = 1:numel(tagList)
+                    if isempty(queryStrList)
+                        if isempty(tagList{i})
+                            matchingProcs = [matchingProcs procList{i}];
+                            matchingTags = [matchingTags {procList{i}.tag_}];  
+                        end
+                    else
+                        matchStr = length(queryStrList) == sum(cellfun(@(x) ~isempty(strfind(lower(tagList{i}), lower(x))), queryStrList,'unif', 1));
+                        if matchStr
+                            matchingProcs = [matchingProcs {procList{i}}];
+                            matchingTags = [matchingTags {procList{i}.tag_}];
+                        end
+                    end
+                end
+            else
+                [matchingProcs, matchingTags] = obj.findProcessTag(queryStrList{:});                
+            end
+            
+            assert(~isempty(matchingProcs), ['No Process(es) with tag containing the string ''' queryStrList{:} ''' exist!'])
+            
+            if iscell(matchingProcs) && numel(matchingProcs) == 1
+                matchingProcs = matchingProcs{1};
+            end
+        end
+        
+        function proc = getProcess(obj, index_or_tag)
+            if ischar(index_or_tag) && ~isempty(index_or_tag)
+                % Return process corresponding to the specified tag
+                % Default behavior is for an exact match
+                % for more flexible tag query- use findProcessTag
+                exactMatch = true;
+                [proc tags] = obj.findProcessTag(index_or_tag, exactMatch);
+            elseif isnumeric(index_or_tag)
+                % Return process corresponding to the specified index
+                i = index_or_tag;
+                assert(insequence_and_scalar(i,1,numel(obj.processes_)), ['Process Index [' num2str(i) '] does Not exist!']);
+                proc = obj.processes_{i};
+            else
+                error('Incorrect variable type: must be numeric int for process index or char for process tag');
+            end
+        end
+
         function status = unlinkProcess(obj, process)
             % Unlink process from processes list
             
@@ -238,6 +384,8 @@ classdef  MovieObject < hgsetget
                 status = true;
             end
         end
+
+
         
         function deleteProcess(obj, process)
             % Delete process from processes list and parent packages
@@ -278,6 +426,20 @@ classdef  MovieObject < hgsetget
             
             % Delete process object
             if isValid, delete(process); end
+        end
+        
+        function [removedIDs,remainingIDs] = removeEmptyProcesses(obj)
+            % Remove empty processes from processes_ cell array
+            emptyProcesses = cellfun('isempty',obj.processes_);
+            obj.processes_ = obj.processes_(~emptyProcesses);
+            if(nargout > 0)
+                % Return the original indexes that were removed
+                removedIDs = find(emptyProcesses);
+            end
+            if(nargout > 1)
+                % Return the original indexes that were kept
+                remainingIDs = find(~emptyProcesses);
+            end
         end
         
         function replaceProcess(obj, pid, newprocess)
@@ -341,6 +503,12 @@ classdef  MovieObject < hgsetget
             obj.packages_ = horzcat(obj.packages_ , {newpackage});
         end
         
+        function setPackage(obj,i, newpackage)
+            % Add a package object to the package list
+            assert(isa(newpackage,'Package'));
+            obj.packages_{i} = newpackage;
+        end
+        
         function package = getPackage(obj, i)
             % Return the package corresponding to the specified index
             assert(insequence_and_scalar(i,1,numel(obj.packages_)));
@@ -363,6 +531,14 @@ classdef  MovieObject < hgsetget
                 status = true;
             end
         end
+
+        function replacePackage(obj, packageOld,packageNew)
+            idx=packageOld.getIndex()
+            obj.setPackage(idx,packageNew)
+            obj.unlinkPackage(packageOld)
+        end
+
+
         
         function deletePackage(obj, package)
             % Remove thepackage object from the packages list
@@ -472,13 +648,16 @@ classdef  MovieObject < hgsetget
             
             % Relocate output directory and set the ne movie path
             obj.outputDirectory_=relocatePath(obj.outputDirectory_,oldRootDir,newRootDir);
+            oldRootDir
+            newRootDir
+            obj.getPath
             obj.setPath(relocatePath(obj.getPath,oldRootDir,newRootDir));
             
             % Relocate the processes
             for i=1:numel(obj.processes_), obj.processes_{i}.relocate(oldRootDir,newRootDir); end
             
             % Relocate the packages
-            for i=1:numel(obj.packages_), obj.packages_{i}.relocate(oldRootDir,newRootDir); end
+            for i=1:numel(obj.packages_), if (~isempty(obj.packages_{i})), obj.packages_{i}.relocate(oldRootDir,newRootDir); end; end;
         end
         
         function reset(obj)
@@ -524,6 +703,10 @@ classdef  MovieObject < hgsetget
             status = obj.omeroSave_ && ~isempty(obj.getOmeroSession());
         end
         [ movieObject, process, processID ] = getOwnerAndProcess( movieObject, processClass, createProcessIfNoneExists, varargin );
+
+        function openInNautilus(obj)
+            system(['nautilus ' obj.outputDirectory_])
+        end
 
     end
     
@@ -573,6 +756,55 @@ classdef  MovieObject < hgsetget
             
             obj= data.(vars{isMovie});
         end
+
+        function [matchingProcs, matchingTags] = searchProcessList(procList,tagList,queryField,queryStr,exactMatch,safeCall,selectIdx)
+            matchingProcs = {};
+            matchingTags = [];
+            for i = 1:numel(tagList)
+                if isempty(queryStr)
+                    if isempty(tagList{i})
+                        matchingProcs = [matchingProcs {procList{i}}];
+                        matchingTags = [matchingTags {procList{i}.([queryField '_'])}];  
+                    end
+                else
+                    if exactMatch
+                        if strcmp(tagList{i}, queryStr)
+                            matchingProcs = [matchingProcs {procList{i}}];
+                            matchingTags = [matchingTags {procList{i}.([queryField '_'])}];
+                        end
+                    else
+                        if strfind(lower(tagList{i}), lower(queryStr)) > 0
+                            matchingProcs = [matchingProcs {procList{i}}];
+                            matchingTags = [matchingTags {procList{i}.([queryField '_'])}];
+                        end
+                    end
+                end
+            end
+            if(~safeCall)
+                if exactMatch
+                    assert(~isempty(matchingProcs), ['No Process(es) with (exact) matching  tag ''' queryStr ''' exist! (try findProcessTag for more flexible string search)'])
+                else
+                    assert(~isempty(matchingProcs), ['No Process(es) with tag containing the string ''' queryStr ''' exist!'])
+                end
+            end
+            try
+                matchingProcs = [matchingProcs{:}];
+            catch
+                disp('Not same process class type, returning cell array');
+            end
+            if iscell(matchingProcs) && numel(matchingProcs) == 1
+                matchingProcs = matchingProcs{1};
+            end
+            if(strcmp(selectIdx,'last')&&~isempty(matchingProcs))
+                matchingProcs=matchingProcs(end);
+                matchingTags=matchingTags(end);
+                selectIdx=[];
+            end           
+            if(~isempty(selectIdx)&&~isempty(matchingProcs))
+                matchingProcs=matchingProcs(selectIdx);
+                matchingTags=matchingTags(selectIdx);
+            end
+        end
         
         function validator = getPropertyValidator(property)
             % Retrieve the validator for the specified property
@@ -608,21 +840,31 @@ ip.addRequired('list',@iscell);
 ip.addRequired('type',@ischar);
 ip.addOptional('nDesired',1,@isscalar);
 ip.addOptional('askUser',true,@isscalar);
+ip.addParameter('tag',false, @islogical);
 ip.parse(list, type, varargin{:});
 nDesired = ip.Results.nDesired;
 askUser = ip.Results.askUser;
 
-
-iProc = find(cellfun(@(x) isa(x,type), list));
+if ip.Results.tag
+   iProc = find(cellfun(@(x) strcmp(x.tag_,type), list));
+else
+   iProc = find(cellfun(@(x) isa(x,type), list));
+end
+nProc = numel(iProc);
 nProc = numel(iProc);
 
 %If there are only nDesired or less processes found, return
 if nProc <= nDesired, return; end
-
 % If more than nDesired processes
 if askUser
     isMultiple = nDesired > 1;
-    names = cellfun(@(x) (x.getName()), list(iProc), 'UniformOutput', false);
+    % check if tag_ propery exists for all processes
+    if all(cellfun(@(x) isprop(x, 'tag_'), list(iProc)))
+        % include tag, if it does
+        names = cellfun(@(x) ([x.getName() '-' x.tag_]), list(iProc), 'UniformOutput', false);
+    else
+        names = cellfun(@(x) (x.getName()), list(iProc), 'UniformOutput', false);
+    end
     iSelected = listdlg('ListString', names,...
         'SelectionMode', isMultiple, 'ListSize', [400,400],...
         'PromptString', ['Select the desired ' type ':']);

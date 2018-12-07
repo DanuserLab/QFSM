@@ -29,7 +29,7 @@ function MD = bfImport(dataPath,varargin)
 %   MD - A single MovieData object or an array of MovieData objects
 %   depending on the number of series in the original images.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -70,11 +70,21 @@ assert(status, '%s is not a valid path', dataPath);
 assert(~f.directory, '%s is a directory', dataPath);
 dataPath = f.Name;
 
+% Set output directory (based on image extraction flag)
+[mainPath, movieName, movieExt] = fileparts(dataPath);
+token = regexp([movieName,movieExt], '^(.+)\.ome\.tiff{0,1}$', 'tokens');
+if ~isempty(token), movieName = token{1}{1}; end
+
+if ~isempty(ip.Results.outputDirectory)
+    mainOutputDir = ip.Results.outputDirectory;
+else
+    mainOutputDir = fullfile(mainPath, movieName);
+end
+
 try
     % autoload java path and configure log4j
     bfInitLogging();
-    % Retrieve movie reader and metadata
-    r = loci.formats.Memoizer(bfGetReader(),0);
+    r = bfGetMemoizer();
     r.setId(dataPath);
     r.setSeries(0);
 catch bfException
@@ -87,17 +97,6 @@ end
 nSeries = r.getSeriesCount();
 MD(1, nSeries) = constructor();
 assert(isa(MD,'MovieData'),'class parameter must be a MovieData subclass');
-
-% Set output directory (based on image extraction flag)
-[mainPath, movieName, movieExt] = fileparts(dataPath);
-token = regexp([movieName,movieExt], '^(.+)\.ome\.tiff{0,1}$', 'tokens');
-if ~isempty(token), movieName = token{1}{1}; end
-
-if ~isempty(ip.Results.outputDirectory)
-    mainOutputDir = ip.Results.outputDirectory;
-else
-    mainOutputDir = fullfile(mainPath, movieName);
-end
 
 % Create movie channels
 nChan = r.getSizeC();
@@ -155,7 +154,16 @@ for i = 1 : nSeries
         end
         
         % Create new channel
-        movieChannels(i, iChan) = Channel(dataPath, channelArgs{:});
+        try
+            movieChannels(i, iChan) = Channel(dataPath, channelArgs{:});
+        catch err
+            warning(['Possible failure with Channel metadata import or ', ... 
+                'property validation  (please verify) -- for ' dataPath ...
+                ', Series ' num2str(iSeries) ... 
+                     ', Channel ' num2str(iChan) ...
+                ' Now attempting default Channel constructor.']);
+            movieChannels(i, iChan) = Channel(dataPath);
+        end
     end
     
     % Create movie object
@@ -199,8 +207,9 @@ pixelSizeY = metadataStore.getPixelsPhysicalSizeY(iSeries);
 if ~isempty(pixelSizeY)
     if ~isempty(pixelSize)
         pixelSizeY = pixelSizeY.value(ome.units.UNITS.NM).doubleValue();
-        assert(isequal(round(10*pixelSize)*0.1, round(pixelSizeY*10)*0.1),...
-            'Pixel size different in x and y');
+        if(~isequal(round(10*pixelSize)*0.1, round(pixelSizeY*10)*0.1))
+            warning('bfImport:PixelSizeDifferentXY','Pixel size different in x (%g) and y (%g)',pixelSize,pixelSizeY);
+        end
     else
         pixelSize = pixelSizeY.value(ome.units.UNITS.NM).doubleValue();
     end

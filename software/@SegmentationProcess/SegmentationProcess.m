@@ -1,7 +1,7 @@
 classdef SegmentationProcess < MaskProcess
     % An abstract superclass of all segmentation processes
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -56,7 +56,7 @@ classdef SegmentationProcess < MaskProcess
         function procClasses = getConcreteClasses()
             procClasses = ...
                 {@ThresholdProcess;
-                 @MSSSegmentationProcess;
+                 @MultiScaleAutoSegmentationProcess
                  @ThresholdProcess3D;
                  @ExternalSegmentationProcess;
                  @NucSegProcess;

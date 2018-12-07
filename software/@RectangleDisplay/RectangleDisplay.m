@@ -2,7 +2,7 @@ classdef RectangleDisplay < MovieDataDisplay
     %Concrete display class for displaying errors as circles
     % Adapated from fsmVectorAnalysis
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

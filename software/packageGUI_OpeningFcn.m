@@ -4,7 +4,7 @@ function packageGUI_OpeningFcn(hObject,eventdata,handles,packageName,varargin)
 % packageGUI_OpeningFcn(packageName,MD)   MD: MovieData object
 %
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -134,7 +134,7 @@ if(isempty(ip.Results.packageIndx))
     % I. Before loading MovieData, firstly check if the current package exists
     for i = 1:nMovies
         % Check for existing packages and create them if false
-        packageIndx{i} = ip.Results.MO(i).getPackageIndex(packageName,1,false);
+        packageIndx{i} = ip.Results.MO(i).getPackageIndex(packageName,1,true);
     end
 else
     % I (alt). If given the package index, use that instead
@@ -260,6 +260,7 @@ templateTag{3} = 'pushbutton_show';
 templateTag{4} = 'pushbutton_set';
 templateTag{5} = 'axes_prochelp';
 templateTag{6} = 'pushbutton_open';
+templateTag{7} = 'processTagLabel';
 
 set(handles.(templateTag{6}),'CData',userData.openIconData);
 
@@ -296,8 +297,19 @@ for i = 1 : nProc
     catch err
         processName=eval([processClassName '.getName']);
     end
+
     checkboxString = [' Step ' num2str(i) ': ' processName];
     set(handles.(procTag{1}),'String',checkboxString)
+
+    if ~isempty(userData.crtPackage.processes_{i}) ...
+        && isprop(userData.crtPackage.processes_{i}, 'tag_') && ~isempty(userData.crtPackage.processes_{i}.tag_)
+        processTagLabelString = ['[' userData.crtPackage.processes_{i}.tag_ ']'];
+    else
+        processTagLabelString = '{no tag}';
+    end
+
+    set(handles.(procTag{7}),'String',processTagLabelString)
+    set(handles.(procTag{7}),'Visible','off')
     
     % Setup help button
     set(handles.figure1,'CurrentAxes',handles.(procTag{5}));
@@ -307,6 +319,7 @@ for i = 1 : nProc
     set(Img,'ButtonDownFcn',@icon_ButtonDownFcn,...
         'UserData', struct('class', processClassName))
 end
+handles.processTagLabels = findall(0,'-regexp','Tag', 'processTagLabel_');
 
 % Remove templates and remove from the handles structure
 cellfun(@(x) delete(handles.(x)), templateTag)

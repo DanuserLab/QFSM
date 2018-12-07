@@ -3,7 +3,7 @@ classdef Process < hgsetget
     % will inherit.
     %
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -31,6 +31,8 @@ classdef Process < hgsetget
     
     properties  (SetAccess = protected)
         name_           % Process name
+        tag_            % User definable/queriable tag for orgnaizational convenience
+        processTree_    % Previous proceses associated with MovieData owner at time of process instantiation
         
         % Success/Uptodate flags
         procChanged_   % Whether process parameters have been changed
@@ -38,13 +40,14 @@ classdef Process < hgsetget
         % If the parameter of parent process is changed
         % updated_ - false, not changed updated_ - true
         updated_
-        
+
         funName_        % Function running the process
         funParams_      % Parameters for running the process
         
         inFilePaths_    % Path to the process input
         outFilePaths_   % Path to the process output
-        
+        outFilePathsCache_;
+
         is3Dcompatible_ % can process handle 3D movie data
 
     end
@@ -68,10 +71,16 @@ classdef Process < hgsetget
                 if nargin > 1
                     obj.name_ = name;
                 end
+
                 obj.createTime_ = clock;
                 obj.procChanged_ = false;
                 obj.success_ = false;
                 obj.updated_ = true;
+                obj.processTree_ = owner.processes_;
+                
+                % set default tag label
+                numproc = numel(owner.getProcessIndex(class(obj), Inf, 0));
+                obj.tag_ = [class(obj) '_' num2str(numproc+1)];
             end
         end
     end
@@ -93,7 +102,16 @@ classdef Process < hgsetget
             is3Dcompatible = obj.is3Dcompatible_;
         end
         
-        function setParameters(obj, para)
+        function setParameters(obj, para,varargin)
+            % If the arguments are a field,value pair list
+            % Then update the current parameters with those values
+            if(ischar(para) && mod(nargin,2) == 1)
+                in = [para varargin];
+                para = obj.funParams_;
+                for ii = 1:2:length(in)
+                    para.(in{ii}) = in{ii+1};
+                end
+            end
             % Set the process parameters
             if isequal(obj.funParams_, para), return; end
             obj.funParams_ = para;
@@ -105,8 +123,8 @@ classdef Process < hgsetget
             end
         end
         
-        function setPara(obj, parameters)
-            setParameters(obj, parameters)
+        function setPara(obj, parameters, varargin)
+            setParameters(obj, parameters, varargin{:})
         end
         
         function setUpdated(obj, is)
@@ -204,6 +222,18 @@ classdef Process < hgsetget
             obj.setParameters(crtParams);
         end
         
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new=feval(class(this),this.getOwner(),this.name_);
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                if(~strcmp(p{i},'owner_')&&~strcmp(p{i},'createTime_')&&~strcmp(p{i},'startTime_')&&~strcmp(p{i},'finishTime_'))
+                    new.(p{i}) = this.(p{i});
+                end
+            end
+        end
+        
         function run(obj,varargin)
             % Reset sucess flags and existing display methods
             obj.resetDisplayMethod();
@@ -244,6 +274,36 @@ classdef Process < hgsetget
             cellfun(@delete, obj.displayMethod_(validMethods));
             obj.displayMethod_ = {};
         end
+       
+       function outputCell=loadFileOrCache(obj)
+           if(isempty((obj.outFilePathsCache_)))
+                outputCell=cell(1,numel(obj.outFilePaths_));
+                for i=1:numel(obj.outFilePaths_)
+                    if(~isempty(obj.outFilePaths_{i}))
+                        outputCell{i}=load(obj.outFilePaths_{i});
+                    end
+                end
+            else
+                outputCell=obj.outFilePathsCache_;
+            end
+       end
+
+       function cacheProcess=createCacheProcess(obj)
+            cacheProcess=ExternalProcess(obj.getOwner(),['cached_' obj.name_]);
+            cacheProcess.setOutFilePaths({[obj.getOwner().outputDirectory_ filesep 'dynROIs' filesep 'initDynROIs.mat']});
+            cacheProcess.setProcessTag(['cached_' obj.tag_]);
+            eoutput=cellfun(@isempty,obj.outFilePaths_);
+            tmp=cell(size(obj.outFilePaths_));
+            tmp(~eoutput)=cellfun(@(f) load(f),obj.outFilePaths_(~eoutput),'unif',0);
+            cacheProcess.outFilePathsCache_=tmp;
+       end
+
+
+       function emptyCache(obj)
+                obj.outFilePathsCache_=[];
+       end
+
+       
         
         
         function method = getDisplayMethod(obj, iOutput, iChan)
@@ -285,7 +345,23 @@ classdef Process < hgsetget
              
 
         end
-        
+
+        function setProcessTag(obj, tag)
+            obj.tag_ = tag;
+        end
+        function setFunName(obj, funName)
+            obj.funName_ = funName;
+        end
+        function tag = getProcessTag(obj)
+            if isprop(obj, 'tag_')
+                tag = obj.tag_;
+            else
+                numproc = numel(obj.owner_.getProcessIndex(class(obj), Inf, 0));
+                tag = ['proc_' class(obj) '_' num2str(numproc+1)];
+                obj.setProcessTag(tag);
+            end
+        end
+
         function time = getProcessingTime(obj)
             %The process has been re-run, update the time.
             time=sec2struct(24*3600*(datenum(obj.finishTime_)-datenum(obj.startTime_)));
@@ -293,7 +369,7 @@ classdef Process < hgsetget
         
         function [packageID, procID] = getPackageIndex(obj)
             % Retrieve index of packages to which the process is associated
-            validPackage = cellfun(@(x) x.hasProcess(obj),...
+            validPackage = cellfun(@(x) (~isempty(x))&&(x.hasProcess(obj)) ,...
                 obj.getOwner().packages_);
             packageID = find(validPackage);
             procID = cellfun(@(x) x.getProcessIndex(obj),...
@@ -330,6 +406,7 @@ classdef Process < hgsetget
             ip.KeepUnmatched = true;
             if obj.owner_.is3D()
                 ip.addOptional('iZ',[],@(x) insequence(x,1,obj.owner_.zSize_));
+                ip.addOptional('projectionAxis3D','Z', @(x) ismember(x,{'X','Y','Z','three'}));
             end
             ip.parse(obj,iChan,varargin{:});
             
@@ -344,11 +421,12 @@ classdef Process < hgsetget
             if obj.owner_.is3D()
                 % could owner be 3D without having an iFrame ?
                 loadParams.iZ = ip.Results.iZ;
+                loadParams.projectionAxis3D = ip.Results.projectionAxis3D;
             end
             if ip.Results.useCache
                 loadParams.useCache = true;
             end
-            loadArgs = [ loadArgs loadParams];
+            loadArgs = [loadArgs loadParams];
             
             data = obj.loadChannelOutput(loadArgs{:});
                 

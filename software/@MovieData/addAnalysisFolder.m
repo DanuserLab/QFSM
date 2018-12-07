@@ -6,7 +6,7 @@ function MD=addAnalysisFolder(MD,currentAnalysisRoot,newAnalysisRoot,varargin)
 % Optionnaly the channel can be relocated to using the options
 % oldRawDataRoot and newRawDataRoot.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -30,21 +30,27 @@ function MD=addAnalysisFolder(MD,currentAnalysisRoot,newAnalysisRoot,varargin)
     ip.addRequired('MD');
     ip.addRequired('currentAnalysisRoot',@ischar);
     ip.addRequired('newAnalysisRoot',@ischar);
+    ip.addOptional('copyOutput',false,@islogical);
     ip.addOptional('oldRawDataRoot','',@ischar);
     ip.addOptional('newRawDataRoot','',@ischar);
     ip.parse(MD,currentAnalysisRoot,newAnalysisRoot,varargin{:});
-    
+    p=ip.Results;
+
     oldRawDataRoot=ip.Results.oldRawDataRoot;
     newRawDataRoot=ip.Results.newRawDataRoot;
+    MD.outputDirectory_
+    currentAnalysisRoot
+    newAnalysisRoot
+    MDAnalysisPath=relocatePath(MD.outputDirectory_, currentAnalysisRoot,  newAnalysisRoot)
+    mkdirRobust(MDAnalysisPath);
+    if(p.copyOutput)
+        copyfile(MD.outputDirectory_,MDAnalysisPath);
+    end
     
-    MDAnalysisPath=relocatePath(MD.outputDirectory_, currentAnalysisRoot,  newAnalysisRoot);
-    mkdir(MDAnalysisPath);
     %MD.sanityCheck(MDAnalysisPath,[sprintf(namePattern,i) '.mat'],false);
-    % , filesep sprintf(namePattern,i)
     
     for c=1:length(MD.channels_);
         MD.getChannel(c).relocate(oldRawDataRoot,newRawDataRoot);
     end
-    mkdir(MDAnalysisPath);
     MD.relocate(MD.outputDirectory_,MDAnalysisPath,false);
     MD.save();

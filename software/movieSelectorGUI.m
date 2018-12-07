@@ -20,7 +20,7 @@ function varargout = movieSelectorGUI(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -195,7 +195,6 @@ packageList = {
     'BiosensorsPackage';...
     'FocalAdhesionPackage'
     'FocalAdhesionSegmentationPackage'
-    'IntegratorPackage'
     'QFSMPackage'
     'SegmentationPackage'
     'TFMPackage'
@@ -208,6 +207,8 @@ packageList = {
     'MicroNucQuantPackage'
     'MaskPropsCalcFilterPackage'
     'MaskQuantPackage'
+    'Morphology3DPackage'
+    'XcorrFluctuationPackage'
     };
 validPackage = cellfun(@(x) exist(x,'class')==8,packageList);
 packageList = packageList(validPackage);

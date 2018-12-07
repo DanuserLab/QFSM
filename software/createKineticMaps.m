@@ -24,7 +24,7 @@ function [polyMap,depolyMap,kinMap2C]=createKineticMaps(kinScore,n,imSize,vararg
 % Sebastien Besson, June 2011
 % Adapted from fsmKineticMaps
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

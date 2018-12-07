@@ -2,7 +2,7 @@ classdef Package < hgsetget
     % Defines the abstract class Package from which every user-defined packages
     % will inherit. This class cannot be instantiated.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -129,6 +129,16 @@ classdef Package < hgsetget
             value = regexprep(value,endingFilesepToken,'');
             obj.outputDirectory_=value;
         end
+
+        function displayProcessInfo(obj)
+            for i=1:length(obj.processes_)
+                if ~isempty(obj.processes_{i})
+                    disp([num2str(i) ' : ' obj.processes_{i}.name_ '(' obj.processes_{i}.tag_  ') Output: ' num2str(length(obj.processes_{i}.outFilePaths_)) ]);
+                else
+                    disp([num2str(i) ' : empty']);
+                end
+            end
+        end
         
         
         function [status processExceptions] = sanityCheck(obj, varargin)
@@ -177,7 +187,7 @@ classdef Package < hgsetget
             
             % Allow dynamic package extension
             if nProc>numel(obj.processes_), 
-                obj.processes_{numel(obj.processes_)+1:nProc}=deal([]); 
+                [obj.processes_{numel(obj.processes_)+1:nProc}]=deal([]); 
             end
             
             % Check processes are consistent with process class names
@@ -250,6 +260,11 @@ classdef Package < hgsetget
             % Retrieve the index of an input process
             index = find(cellfun(@(x) isequal(x, process), obj.processes_));
         end
+
+        function index = getIndex(obj)
+            % Retrieve the index of own Package
+            index = find(cellfun(@(x) isequal(x, obj), obj.owner_.packages_));
+        end
         
         function createDefaultProcess(obj, i)
             % Create a process using default constructor
@@ -261,7 +276,7 @@ classdef Package < hgsetget
             obj.sanityCheck(); 
         end
         
-        function setProcess(obj, i, newProcess)
+        function obj=setProcess(obj, i, newProcess)
             % set the i th process of obj.processes_ to newprocess
             % If newProcess = [ ], clear the process in package process
             % list
@@ -291,6 +306,7 @@ classdef Package < hgsetget
         
         function relocate(obj,oldRootDir,newRootDir)
             obj.outputDirectory_ = relocatePath(obj.outputDirectory_,oldRootDir,newRootDir);
+            cellfun(@(x) (x.relocate(oldRootDir,newRootDir)), obj.processes_(~cellfun(@isempty,obj.processes_)));
         end
         
         function procSeq = getProcessSequence(obj, procIDs)
@@ -305,6 +321,19 @@ classdef Package < hgsetget
                 % Determine parents recursively
                 procSeq = unique([obj.getProcessSequence(parentIDs) procIDs],'stable');
             end
+        end
+
+        function [matchingProcs, matchingTags] = searchProcessName(obj, queryStr)
+                allProc=obj.processes_;
+                allProcNames=cellfun(@(p) p.name_,allProc,'unif',0);
+                [matchingProcs,matchingTags]=MovieObject.searchProcessList(allProc,allProcNames,'name',queryStr,1,1,[]);
+        end
+
+        function [matchingProcs, matchingTags] = searchProcessTag(obj, queryStr)
+                eProc=cellfun(@isempty,obj.processes_);
+                allProc=obj.processes_(~eProc);
+                allProcTags=cellfun(@(p) p.tag_,allProc,'unif',0);
+                [matchingProcs,matchingTags]=MovieObject.searchProcessList(allProc,allProcTags,'tag',queryStr,1,1,[]);
         end
         
     end

@@ -4,7 +4,7 @@ classdef  BioFormatsReader < Reader
     %
     % See also Reader
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -38,6 +38,8 @@ classdef  BioFormatsReader < Reader
             ip.addRequired('id', @ischar);
             ip.addOptional('series', 0, @(x) validateattributes(x, {'numeric'}, {'scalar'}));
             ip.addParamValue('reader', [], @(x) isa(x, 'loci.formats.IFormatReader'));
+            % Directory for memo file
+            ip.addParamValue('directory',bfGetMemoDirectory(), @ischar);
             ip.parse(varargin{:});
             
             % Initialize Bio-Formats and log4j
@@ -47,7 +49,7 @@ classdef  BioFormatsReader < Reader
             if ~isempty(ip.Results.reader),
                 obj.formatReader = ip.Results.reader;
             else
-                obj.formatReader = loci.formats.Memoizer(bfGetReader(),0);
+                obj.formatReader = bfGetMemoizer([], ip.Results.directory);
                 try
                     obj.formatReader.setId(obj.id);
                 catch

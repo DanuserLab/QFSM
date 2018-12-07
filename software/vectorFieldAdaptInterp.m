@@ -38,7 +38,7 @@ function Mi=vectorFieldAdaptInterp(M,Pg,d0,polygon,mode,alpha)
 %  
 %   Aaron Ponti, 08/23/2004
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

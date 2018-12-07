@@ -11,7 +11,7 @@ function trackMovieFlow(movieData,varargin)
 %   names and possible values as described below
 %
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

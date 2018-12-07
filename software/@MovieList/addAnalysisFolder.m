@@ -6,7 +6,7 @@ function MLOut=addAnalysisFolder(ML,currentAnalysisRoot,newAnalysisRoot,varargin
 % Optionnaly the channel can be relocated to using the options
 % oldRawDataRoot and newRawDataRoot.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -48,6 +48,7 @@ newRawDataRoot=ip.Results.newRawDataRoot;
         MDs{i}=addAnalysisFolder(MD,currentAnalysisRoot,newAnalysisRoot,varargin{:});
         
     end
-    mkdir([newAnalysisRoot filesep 'analysis']);
-    MLOut=MovieList(MDs,[newAnalysisRoot filesep 'analysis'],'movieListFileName_',ML.movieListFileName_,'movieListPath_',[newAnalysisRoot filesep 'analysis']);
+    newAnalysisPath=relocatePath(ML.outputDirectory_, currentAnalysisRoot,  newAnalysisRoot);
+    mkdirRobust([newAnalysisPath]);
+    MLOut=MovieList(MDs,[newAnalysisPath],'movieListFileName_',ML.movieListFileName_,'movieListPath_',[newAnalysisPath]);
     MLOut.save();

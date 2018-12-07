@@ -18,7 +18,7 @@ function processGUI_OpeningFcn(hObject, eventdata, handles, string,varargin)
 %
 % Sebastien Besson May 2011
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -129,11 +129,20 @@ end
 
 % Check for multiple movies else
 if isfield(handles,'checkbox_applytoall')
-    if numel(userData_main.MD) ==1
-        set(handles.checkbox_applytoall,'Value',0,'Visible','off');
+    if ~isa(userData_main.crtPackage, 'XcorrFluctuationPackage')
+        if numel(userData_main.MD) ==1
+            set(handles.checkbox_applytoall,'Value',0,'Visible','off');
+        else
+            set(handles.checkbox_applytoall, 'Value',...
+                userData_main.applytoall(userData.procID));
+        end
     else
-        set(handles.checkbox_applytoall, 'Value',...
-            userData_main.applytoall(userData.procID));
+        if numel(userData_main.ML) ==1
+            set(handles.checkbox_applytoall,'Value',0,'Visible','off');
+        else
+            set(handles.checkbox_applytoall, 'Value',...
+                userData_main.applytoall(userData.procID));
+        end
     end
     uicontrol(handles.pushbutton_done);
 end

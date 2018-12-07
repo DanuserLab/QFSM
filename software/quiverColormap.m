@@ -32,7 +32,7 @@ function h= quiverColormap(x,y,u,v,varargin)
 % Inspired by quiverc.m, adjust_quiver_arrowhead_size.m, quiverclr.m
 % Sebastien Besson, March 2012
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -72,6 +72,10 @@ else
 end
 delete(h);
 hold on;
+
+% Removing NaNs
+nanIndex=isnan(u);
+x(nanIndex)=[]; y(nanIndex)=[]; u(nanIndex)=[]; v(nanIndex)=[]; 
 
 % Index vectors per magnitude
 nColors = size(ip.Results.Colormap,1);

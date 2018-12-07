@@ -1,7 +1,7 @@
 classdef TextDisplay < MovieDataDisplay
     %Concrete display class for text as an overlay
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -47,8 +47,11 @@ classdef TextDisplay < MovieDataDisplay
                 obj.Color = repmat(obj.Color,[numel(data.String) 1]);
             end
             
-            h = arrayfun(@(x)(text(data.Position(x,1),data.Position(x,2),data.String{x},'Color',obj.Color(x,:), 'FontSize', obj.FontSize(x))),1:numel(data.String),...
-                'UniformOutput',false);            
+            h = arrayfun(@(x)(text(data.Position(x,1),data.Position(x,2),...
+                        data.String{x},'Color',obj.Color(x,:),...
+                        'FontSize',obj.FontSize)),...
+                        1:numel(data.String),...
+                        'UniformOutput',false);            
             if iscell(h)
                 cellfun(@(x) set(x,'Tag',tag),h);
                 cellfun(@(x) set(x,'Visible',obj.Visible),h);

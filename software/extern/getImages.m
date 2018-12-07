@@ -34,7 +34,7 @@ function images = getImages(session, varargin)
 %
 % See also: GETOBJECTS, GETPROJECTS, GETDATASETS, GETPLATES
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

@@ -1,4 +1,4 @@
-function mkClrDir(dirPath)
+function mkClrDir(dirPath,verbose)
 %MKCLRDIR makes sure that the specified directory exists AND is empty 
 % 
 % This is just a little function for creating / settin up output
@@ -12,7 +12,7 @@ function mkClrDir(dirPath)
 % Hunter Elliott
 % 6/2010
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -34,17 +34,20 @@ function mkClrDir(dirPath)
 if nargin < 1 || isempty(dirPath)
     error('You must specify the directory to set up!')
 end
+if nargin < 2
+    verbose=true;
+end
 
 if ~exist(dirPath,'dir')
     try
         mkdir(dirPath)
     catch
         try
-            system(['mkdir -p ' dirPath]);
+            system(['mkdir -p "' dirPath '"']);
         catch
             [upperPath,curFolderName] = fileparts(dirPath);
             cd(upperPath)
-            system(['mkdir -p ' curFolderName]);
+            system(['mkdir -p "' curFolderName '"']);
         end
     end
 else
@@ -54,7 +57,15 @@ else
         %Remove the . and .. from dir (on linux)
         inDir = inDir(arrayfun(@(x)(~strcmp('.',x.name) ...
             && ~strcmp('..',x.name)),inDir));
-        arrayfun(@(x)(delete([dirPath filesep x.name])),inDir);
+        for i = 1:numel(inDir)
+            if inDir(i).isdir
+                rmdir([dirPath filesep inDir(i).name],'s');
+            else
+                delete([dirPath filesep inDir(i).name]);
+            end
+        end
     end
-    display(['The folder ' dirPath ' already existed. Cleaning the folder ...'])
+    if(verbose)
+        display(['The folder ' dirPath ' already existed. Cleaning the folder ...'])
+    end
 end

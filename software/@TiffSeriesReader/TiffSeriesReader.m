@@ -3,7 +3,7 @@ classdef  TiffSeriesReader < Reader
     %
     % See also Reader, BioFormatsReader
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -34,7 +34,7 @@ classdef  TiffSeriesReader < Reader
         function obj = TiffSeriesReader(channelPaths,varargin)
             ip = inputParser;
             ip.CaseSensitive = false;
-            ip.addParamValue('force3D',false, @islogical);
+            ip.addParameter('force3D',false, @islogical);
             ip.parse(varargin{:});
             
             obj.paths = channelPaths;
@@ -188,6 +188,8 @@ classdef  TiffSeriesReader < Reader
                       
             I = obj.loadImage_(c , t , z);
         end
+        
+        imInfo = showMetadata(obj);
 
     end
     methods ( Access = protected )

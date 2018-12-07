@@ -11,7 +11,7 @@ function packageGUI_RefreshFcn(handles, type)
 % Chuangang Ren 08/2010
 % Sebastien Besson (last modified Nov 2011)
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -50,6 +50,9 @@ set(setupHandles,'Enable','on');
 
 % Set movie data path
 if ~isempty(userData.MD), field='MD'; else field = 'ML'; end
+if isa(userData.crtPackage, 'XcorrFluctuationPackage')
+    field = 'ML';
+end
 set(handles.edit_path, 'String', ...
     [userData.(field)(userData.id).getPath filesep userData.(field)(userData.id).getFilename])
 

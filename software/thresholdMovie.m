@@ -93,7 +93,7 @@ function movieData = thresholdMovie(movieDataOrProcess,paramsIn)
 %
 %% ----- Parameters ----- %%
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -322,7 +322,7 @@ for iChan = 1:nChanThresh
             end
         else            
             currThresh = p.ThresholdValue(iChan);
-            if(p.IsPercentile(iChan))
+            if(length(p.IsPercentile) >= iChan &&  p.IsPercentile(iChan))
                 currThresh = prctile(currImage(:),currThresh);
             end
         end

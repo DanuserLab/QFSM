@@ -20,7 +20,7 @@ function varargout = packageGUI(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -41,7 +41,7 @@ function varargout = packageGUI(varargin)
 
 % Edit the above text to modify the response to help packageGUI
 
-% Last Modified by GUIDE v2.5 07-Oct-2016 17:16:06
+% Last Modified by GUIDE v2.5 01-Aug-2017 17:17:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -123,6 +123,10 @@ userData.statusM(userData.id).Checked = userfcn_saveCheckbox(handles);
 
 % Set up new movie GUI parameters
 userData.id = mod(newMovieId-1,nMovies)+1;
+if isa(userData.crtPackage, 'XcorrFluctuationPackage')
+    nMovieLists = length(userData.ML);
+    userData.id = mod(newMovieId-1,nMovieLists)+1;
+end
 userData.crtPackage = userData.package(userData.id);
 set(handles.figure1, 'UserData', userData)
 set(handles.popupmenu_movie, 'Value', userData.id)
@@ -156,11 +160,13 @@ delete(handles.figure1);
 function figure1_DeleteFcn(hObject, eventdata, handles)
 
 userData = get(handles.figure1, 'UserData');
-if ~isempty(userData.MD)
-if userData.MD.isMock()
-    load([userData.MD.mockMD_.parent.movieDataPath_, filesep, userData.MD.mockMD_.parent.movieDataFileName_]);
-    movieViewer(MD, 'refresher', '1');
-end
+if ~isempty(userData)
+    if ~isempty(userData.MD)
+        if userData.MD.isMock()
+            load([userData.MD.mockMD_.parent.movieDataPath_, filesep, userData.MD.mockMD_.parent.movieDataFileName_]);
+            movieViewer(MD, 'refresher', '1');
+        end
+    end
 end
 
 % Find all figures stored in userData and delete them
@@ -249,8 +255,16 @@ procID = str2double(prop(length('pushbutton_set_')+1:end));
 % Read GUI handle from the associated process static method
 crtProc=userData.crtPackage.getProcessClassNames{procID};
 crtProcGUI =eval([crtProc '.GUI']);
+try 
+    userData.setFig(procID) = crtProcGUI('mainFig',handles.figure1,procID);
+catch ME
+    msgbox(ME.message)
+%     rethrow(ME)
+    warning('Loading Custom GUI failed! -- Running CLI parameter config as BACKUP - follow instructions');
+    uiwait(msgbox({'Loading Custom GUI failed!','Running CLI parameter config as BACKUP','Please follow instructions'}));
+    userData.setFig(procID) = cliGUI('mainFig',handles.figure1,procID);
+end
 
-userData.setFig(procID) = crtProcGUI('mainFig',handles.figure1,procID);
 set(handles.figure1, 'UserData', userData);
 guidata(hObject,handles);
 
@@ -300,24 +314,33 @@ userData = get(handles.figure1, 'UserData');
 prop=get(hObject,'Tag');
 procID = str2double(prop(length('pushbutton_show_')+1:end));
 
-% Use the OS-specific command to open result in exploration window
-outputDir = userData.crtPackage.processes_{procID}.funParams_.OutputDirectory;
-if ispc
-    winopen(outputDir);
-elseif ismac
-    system(sprintf('open %s',regexptranslate('escape',outputDir)));
-elseif isunix
-    status = system(sprintf('xdg-open "%s"',regexptranslate('escape',outputDir)));
-    % If a non-zero integer is returned, then display a message box
-    if(status)
+if ~isequal(userData.packageName, 'XcorrFluctuationPackage')
+    % Use the OS-specific command to open result in exploration window
+    outputDir = userData.crtPackage.processes_{procID}.funParams_.OutputDirectory;
+    if ispc
+        winopen(outputDir);
+    elseif ismac
+        system(sprintf('open %s',regexptranslate('escape',outputDir)));
+    elseif isunix
+        status = system(sprintf('xdg-open "%s"',regexptranslate('escape',outputDir)));
+        % If a non-zero integer is returned, then display a message box
+        if(status)
+            msgbox(sprintf('Results can be found under %s',regexptranslate('escape',outputDir)));
+        end
+    else
         msgbox(sprintf('Results can be found under %s',regexptranslate('escape',outputDir)));
+        % SB: Following command not working under Ubuntu (as well as gnome-open
+        % & nautilus)
+        % system(sprintf('xdg-open %s',regexptranslate('escape',outputDir)));
     end
 else
-    msgbox(sprintf('Results can be found under %s',regexptranslate('escape',outputDir)));
-    % SB: Following command not working under Ubuntu (as well as gnome-open
-    % & nautilus)
-    % system(sprintf('xdg-open %s',regexptranslate('escape',outputDir)));
+    if isfield(userData, 'folderFig') && ishandle(userData.folderFig)
+        delete(userData.folderFig)
+    end
+    userData.folderFig = userData.crtPackage.processes_{procID}.folderDisplay();
+    set(handles.figure1, 'UserData', userData);
 end
+    
 
 
 % --------------------------------------------------------------------
@@ -543,3 +566,22 @@ h = msgbox( {...
     '                          If you exit uTrack, the jobs will keep running.' ...
     }, ...
     'uTrack Parallel Help','help');
+
+
+% --- Executes on button press in checkbox_tagName.
+function checkbox_tagName_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_tagName (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_tagName
+% handles.processTagLabels = findall(0,'-regexp','Tag', 'processTagLabel');
+% handles.processTagLabels;
+
+%% TODO - need refresh of tags after runnings
+
+if handles.checkbox_tagName.Value == 0;
+    set(handles.processTagLabels, 'Visible', 'off')
+else
+    set(handles.processTagLabels, 'Visible', 'on')
+end

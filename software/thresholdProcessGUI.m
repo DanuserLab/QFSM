@@ -20,7 +20,7 @@ function varargout = thresholdProcessGUI(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -41,7 +41,7 @@ function varargout = thresholdProcessGUI(varargin)
 
 % Edit the above text to modify the response to help thresholdProcessGUI
 
-% Last Modified by GUIDE v2.5 05-Apr-2017 17:20:52
+% Last Modified by GUIDE v2.5 05-Sep-2017 17:50:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

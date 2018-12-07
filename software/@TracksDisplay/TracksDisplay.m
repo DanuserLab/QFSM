@@ -1,7 +1,7 @@
 classdef TracksDisplay < MovieDataDisplay
     %Conrete class for displaying flow
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -126,7 +126,7 @@ classdef TracksDisplay < MovieDataDisplay
             yLast = yData(iLast);
             
             % Fill gaps
-            for gapLength = 1 : max(gapLengths)
+            for gapLength = uGapLengths(:)'
                 s = gapLengths == gapLength;
                 px = [cc.PixelIdxList{s}];
                 

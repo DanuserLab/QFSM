@@ -5,7 +5,9 @@ function bfsave(varargin)
 %    specified by outputPath.
 %
 %    bfsave(I, outputPath, dimensionOrder) specifies the dimension order of
-%    the input matrix. Default valuse is XYZCT.
+%    the input matrix. This value will be ignored if an OME-XML metadata
+%    object is also passed to bfsave via the metadata key/value parameter.
+%    Default value is XYZCT.
 %
 %    bfsave(I, outputPath, 'Compression', compression) specifies the
 %    compression to use when writing the OME-TIFF file.
@@ -17,7 +19,7 @@ function bfsave(varargin)
 %    OME-XML metadata object when saving the file instead of creating a
 %    minimal OME-XML metadata object from the input 5D matrix.
 %
-%    For more information, see https://www.openmicroscopy.org/site/support/bio-formats5/developers/matlab-dev.html
+%    For more information, see https://docs.openmicroscopy.org/latest/bio-formats/developers/matlab-dev.html
 %
 %    Examples:
 %
@@ -30,7 +32,7 @@ function bfsave(varargin)
 %
 % See also: BFGETREADER, CREATEMINIMALOMEXMLMETADATA
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -92,6 +94,9 @@ if isempty(ip.Results.metadata)
         ip.Results.dimensionOrder);
 else
     metadata = ip.Results.metadata;
+    if ~ismember('dimensionOrder', ip.UsingDefaults)
+        warning('''dimensionOrders'' is ignored if passing ''metadata''');
+    end
 end
 
 % Create ImageWriter

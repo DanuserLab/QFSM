@@ -46,9 +46,9 @@ function [result] = bfopen(id, varargin)
 %     bioformats_package.jar.
 %
 % For many examples of how to use the bfopen function, please see:
-%     http://www.openmicroscopy.org/site/support/bio-formats5.1/developers/matlab-dev.html
+%     https://docs.openmicroscopy.org/latest/bio-formats/developers/matlab-dev.html
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

@@ -32,7 +32,7 @@ function [outlierIndex, r] = detectVectorFieldOutliers(data,varargin)
 % J. Westerweel & F. Scarano, Exp. Fluids, 39 1096-1100, 2005.
 % J. Duncan et al., Meas. Sci. Technol., 21 057002, 2010.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

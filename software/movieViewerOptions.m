@@ -18,7 +18,7 @@ function optionsFig = movieViewerOptions(mainFig)
 % Sebastien Besson, Nov 2012
 % Andrew R. Jamieson - Modified Feb 2017
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -104,13 +104,63 @@ uicontrol(imagePanel,'Style','pushbutton',...
     'String','Calibrate the ratio map unit','HorizontalAlignment','left',...
     'Callback',@(h,event) calibrateRatio(guidata(h)));
 
-hPosition=hPosition+20;
+hPosition=hPosition+25;
+uicontrol(imagePanel,'Style','text',...
+    'Position',[20 hPosition 130 20],'Tag','text_imageChannelScaleFactor',...
+    'String','Channel Scaling','HorizontalAlignment','left');
+uicontrol(imagePanel,'Style','edit','Position',[130 hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelScaleFactor_R',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+uicontrol(imagePanel,'Style','edit','Position',[130+30 hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelScaleFactor_G',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));
+uicontrol(imagePanel,'Style','edit','Position',[130+60 hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelScaleFactor_B',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));
+
+
+hPosition=hPosition+25;
+stepx = 30;
+xpos_ = 0;
+uicontrol(imagePanel,'Style','text',...
+    'Position',[20 hPosition 130 20],'Tag','text_imageChannelContrast',...
+    'String','RGBx[low high]','HorizontalAlignment','left');
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','0','BackgroundColor','white','Tag','edit_imageChannelContrast_R_low',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+xpos_ = xpos_ + stepx;
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelContrast_R_high',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+xpos_ = xpos_ + stepx+10;
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','0','BackgroundColor','white','Tag','edit_imageChannelContrast_G_low',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+xpos_ = xpos_ + stepx;
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelContrast_G_high',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+xpos_ = xpos_ + stepx+10;
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','0','BackgroundColor','white','Tag','edit_imageChannelContrast_B_low',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+xpos_ = xpos_ + stepx;
+uicontrol(imagePanel,'Style','edit','Position',[130+xpos_ hPosition 25 20],...
+    'String','1','BackgroundColor','white','Tag','edit_imageChannelContrast_B_high',...
+    'Callback',@(h,event) setScaleFactorPerChannel(guidata(h)));    
+
+
+
+
+
+hPosition=hPosition+25;
 uicontrol(imagePanel,'Style','text',...
     'Position',[20 hPosition 100 20],'Tag','text_imageScaleFactor',...
     'String','Scaling factor','HorizontalAlignment','left');
 uicontrol(imagePanel,'Style','edit','Position',[130 hPosition 70 20],...
     'String','1','BackgroundColor','white','Tag','edit_imageScaleFactor',...
     'Callback',@(h,event) setScaleFactor(guidata(h)));
+
 
 % Colormap control
 hPosition=hPosition+30;
@@ -236,16 +286,27 @@ uicontrol(overlayPanel,'Style','text',...
 % Windows options
 hPosition=hPosition+30;
 uicontrol(overlayPanel,'Style','text',...
+    'Position',[20 hPosition 150 20],'Tag','text_ProjectionAxis',...
+    'String',' Projection Axis','HorizontalAlignment','left');
+uicontrol(overlayPanel,'Style','popupmenu','String', {'Z', 'Y', 'X','three'},'Value',1,...
+    'Position',[135 hPosition 35 20],...
+    'BackgroundColor','white','Tag','popupmenu_ProjectionAxis',...
+    'Callback', @(h,event) userData.redrawOverlaysFcn());
+
+hPosition=hPosition+30;
+uicontrol(overlayPanel,'Style','text',...
     'Position',[20 hPosition 100 20],'Tag','text_faceAlpha',...
     'String',' Alpha value','HorizontalAlignment','left');
 uicontrol(overlayPanel,'Style','edit','Position',[120 hPosition 50 20],...
     'String','.3','BackgroundColor','white','Tag','edit_faceAlpha',...
     'Callback',@(h,event) userData.redrawOverlaysFcn());
 
+
 hPosition=hPosition+20;
 uicontrol(overlayPanel,'Style','text',...
     'Position',[10 hPosition 200 20],'Tag','text_windowsOptions',...
     'String','Windows options','HorizontalAlignment','left','FontWeight','bold');
+
 
 
 %% Get image/overlay panel size and resize them
@@ -280,6 +341,7 @@ userData.mainFig = mainFig;
 userData.setImageOptions = @(h, method) setImageOptions(handles, h, method);
 userData.getOverlayOptions = @(h,event) getOverlayOptions(handles);
 userData.setOverlayOptions = @(method) setOverlayOptions(handles, method);
+userData.setProjectionAxis3D = @(projectionAxis3D) setProjectionAxis3D(handles, projectionAxis3D);
 
 set(handles.figure1,'UserData',userData);
 
@@ -342,9 +404,30 @@ userData = get(handles.figure1,'UserData');
 userData.redrawImageFcn(handles,'CLim',clim)
 
 function setScaleFactor(handles)
+% grab overall scale factor
 scaleFactor=str2double(get(handles.edit_imageScaleFactor,'String'));
 userData = get(handles.figure1,'UserData');
 userData.redrawImageFcn(handles,'ScaleFactor',scaleFactor)
+
+function setScaleFactorPerChannel(handles)
+% grab per channel scale factors
+ScaleFactorRGB = [1 1 1 0 1 0 1 0 1];
+
+ScaleFactorRGB(1) = str2double(get(handles.edit_imageChannelScaleFactor_R,'String'));
+ScaleFactorRGB(2) = str2double(get(handles.edit_imageChannelScaleFactor_G,'String'));
+ScaleFactorRGB(3) = str2double(get(handles.edit_imageChannelScaleFactor_B,'String'));
+
+ScaleFactorRGB(5) = str2double(get(handles.edit_imageChannelContrast_R_high,'String'));
+ScaleFactorRGB(4) = str2double(get(handles.edit_imageChannelContrast_R_low,'String'));
+
+ScaleFactorRGB(7) = str2double(get(handles.edit_imageChannelContrast_G_high,'String'));
+ScaleFactorRGB(6) = str2double(get(handles.edit_imageChannelContrast_G_low,'String'));
+
+ScaleFactorRGB(9) = str2double(get(handles.edit_imageChannelContrast_B_high,'String'));
+ScaleFactorRGB(8) = str2double(get(handles.edit_imageChannelContrast_B_low,'String'));
+
+userData = get(handles.figure1,'UserData');
+userData.redrawImageFcn(handles,'ScaleFactorRGB',ScaleFactorRGB)
 
 
 function calibrateRatio(handles)
@@ -444,6 +527,8 @@ end
 % Reset the scaleBar
 setScaleBar(handles,'imageScaleBar');
 setTimeStamp(handles);
+% setScaleFactorPerChannel(handles);
+
 
 
 function setOverlayOptions(handles, displayMethod)
@@ -454,9 +539,14 @@ if isa(displayMethod,'VectorFieldDisplay') && ~isempty(displayMethod.CLim)
     set(handles.edit_vectorCmax,'String',displayMethod.CLim(2));
 end
 
+function setProjectionAxis3D(handles, projectionAxis3D)
+    newValue = find(ismember(handles.popupmenu_ProjectionAxis.String, projectionAxis3D));
+    set(handles.popupmenu_ProjectionAxis,'Value', newValue);
+
 function options = getOverlayOptions(handles)
 
 % Read various options
+projectionAxis3D = handles.popupmenu_ProjectionAxis.String(get(handles.popupmenu_ProjectionAxis,'Value'));
 vectorScale = str2double(get(handles.edit_vectorFieldScale,'String'));
 dragtailLength = str2double(get(handles.edit_dragtailLength,'String'));    
 showLabel = get(handles.checkbox_showLabel,'Value');
@@ -468,4 +558,5 @@ clim=[str2double(get(handles.edit_vectorCmin,'String')) ...
 if ~isempty(clim) && all(~isnan(clim)), cLimArgs={'CLim',clim}; else cLimArgs={}; end
 options ={'vectorScale',vectorScale,'dragtailLength',dragtailLength,...
         'faceAlpha',faceAlpha,'showLabel',showLabel, ...
-        'markMergeSplit',markMergeSplit,cLimArgs{:}};
+        'markMergeSplit',markMergeSplit,cLimArgs{:},...
+        'projectionAxis3D', projectionAxis3D{:}};

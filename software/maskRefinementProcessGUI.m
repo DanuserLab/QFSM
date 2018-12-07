@@ -20,7 +20,7 @@ function varargout = maskRefinementProcessGUI(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -41,7 +41,7 @@ function varargout = maskRefinementProcessGUI(varargin)
 
 % Edit the above text to modify the response to help maskRefinementProcessGUI
 
-% Last Modified by GUIDE v2.5 01-Jun-2011 16:59:46
+% Last Modified by GUIDE v2.5 08-Jun-2018 16:38:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -76,6 +76,13 @@ funParams = userData.crtProc.funParams_;
 if funParams.MaskCleanUp
     if ~funParams.FillHoles
         set(handles.checkbox_fillholes, 'Value', 0)
+    else
+        set(handles.checkbox_fillholes, 'Value', 1)
+    end
+    if ~funParams.FillBoundaryHoles
+        set(handles.checkbox_FillBoundaryHoles, 'Value', 0)
+    else
+        set(handles.checkbox_FillBoundaryHoles, 'Value', 1)
     end
     set(handles.edit_1, 'String',num2str(funParams.MinimumSize))
     set(handles.edit_2, 'String',num2str(funParams.ClosureRadius))
@@ -201,6 +208,11 @@ if get(handles.checkbox_cleanup, 'Value')
     else
         funParams.FillHoles = false;
     end
+    if get(handles.checkbox_FillBoundaryHoles, 'Value')
+        funParams.FillBoundaryHoles = true;
+    else
+        funParams.FillBoundaryHoles = false;
+    end
 else
     funParams.MaskCleanUp = false;
 end
@@ -277,3 +289,12 @@ function pushbutton_done_KeyPressFcn(hObject, eventdata, handles)
 if strcmp(eventdata.Key, 'return')
     pushbutton_done_Callback(handles.pushbutton_done, [], handles);
 end
+
+
+% --- Executes on button press in checkbox_FillBoundaryHoles.
+function checkbox_FillBoundaryHoles_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_FillBoundaryHoles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_FillBoundaryHoles

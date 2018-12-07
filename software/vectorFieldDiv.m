@@ -47,7 +47,7 @@ function [divM,d0]=vectorFieldDiv(M,Pg,d0,polygon)
 %
 % Aaron Ponti, 11/18/2002
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

@@ -31,7 +31,7 @@ function percent = parfor_progress(N)
 %
 %   See also PARFOR.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -52,7 +52,7 @@ function percent = parfor_progress(N)
 
 % By Jeremy Scheff - jdscheff@gmail.com - http://www.jeremyscheff.com/
 
-error(nargchk(0, 1, nargin, 'struct'));
+narginchk(0, 1);
 
 if nargin < 1
     N = -1;

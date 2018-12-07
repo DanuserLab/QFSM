@@ -1,7 +1,7 @@
 classdef MaskRefinementProcess < MaskProcessingProcess
     %Class definition for post processing using refineMovieMasks.m
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -75,6 +75,7 @@ classdef MaskRefinementProcess < MaskProcessingProcess
             funParams.OpeningRadius = 0;
             funParams.ObjectNumber = 1; %only 1 object per mask
             funParams.FillHoles = true;
+            funParams.FillBoundaryHoles = true; % if true, if the mask boundary touches two adjacent edges of the image, the hole in between will be filled.
             funParams.SuppressBorder = false;
             funParams.EdgeRefinement = false; %This off by default because it sort of sucks, and is slow.
             funParams.MaxEdgeAdjust = []; %Use refineMaskEdges.m function defaults for these settings

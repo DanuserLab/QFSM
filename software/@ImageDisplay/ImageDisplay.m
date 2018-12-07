@@ -1,7 +1,7 @@
 classdef ImageDisplay < MovieDataDisplay
     %Abstract class for displaying image processing output
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -28,8 +28,10 @@ classdef ImageDisplay < MovieDataDisplay
         sfont = {'FontName', 'Helvetica', 'FontSize', 18};
         lfont = {'FontName', 'Helvetica', 'FontSize', 22};
         ScaleFactor = 1;
+        ScaleFactorRGB = [1 1 1 0 1 0 1 0 1]; % see movieViewerOptions
         NaNColor = [0 0 0];
         invertColormap = false;
+        resetXYLimOnInit = true;
     end
     methods
         function obj=ImageDisplay(varargin)
@@ -38,10 +40,18 @@ classdef ImageDisplay < MovieDataDisplay
         
         function h=initDraw(obj,data,tag,varargin)
             % Plot the image and associate the tag
-            h=imshow(data/obj.ScaleFactor,varargin{:});
+%             if size(data,3) >= 2% && any(obj.ScaleFactorRGB(1:3)~=1) 
+%                 data = obj.imageChScale(data);
+% %                 data = (cat(3,imadjust(data(:,:,1), [.3 .5]),imadjust(data(:,:,2), [.5 .9]),data(:,:,3)));
+%             end
+            
+            h = imshow(data/obj.ScaleFactor,varargin{:});
+            
             set(h,'Tag',tag,'CDataMapping','scaled');
             hAxes = get(h,'Parent');
-            set(hAxes,'XLim',[0 size(data,2)],'YLim',[0 size(data,1)]);
+            if(obj.resetXYLimOnInit)
+                set(hAxes,'XLim',[0 size(data,2)],'YLim',[0 size(data,1)]);
+            end
             
             % Tag all objects displayed by this class, so they can be
             % easily identified and cleared.
@@ -59,12 +69,27 @@ classdef ImageDisplay < MovieDataDisplay
         end
         
         function updateDraw(obj,h,data)
-            if(obj.ScaleFactor ~= 1)
+            if size(data,3) >= 2 %&& any(obj.ScaleFactorRGB~=1)
+                data = obj.imageChScale(data);
+            end
+            
+            if(obj.ScaleFactor ~= 1) 
                 set(h,'CData',data/obj.ScaleFactor)
             else
                 set(h,'CData',data);
             end
             obj.applyImageOptions(h)
+        end
+
+        function imgR = imageChScale(obj, img)
+
+            img = cat(3, imadjust(img(:,:,1), [obj.ScaleFactorRGB(4) obj.ScaleFactorRGB(5)]),...
+                         imadjust(img(:,:,2), [obj.ScaleFactorRGB(6) obj.ScaleFactorRGB(7)]),...
+                         imadjust(img(:,:,3), [obj.ScaleFactorRGB(8) obj.ScaleFactorRGB(9)]));            
+            
+            imgR(:,:,1) = img(:,:,1)./ obj.ScaleFactorRGB(1);
+            imgR(:,:,2) = img(:,:,2)./ obj.ScaleFactorRGB(2);
+            imgR(:,:,3) = img(:,:,3)./ obj.ScaleFactorRGB(3);
         end
         
         function applyImageOptions(obj,h)
@@ -133,6 +158,8 @@ classdef ImageDisplay < MovieDataDisplay
             params(9).validator=@isvector;
             params(10).name='invertColormap';
             params(10).validator=@islogical;
+            params(11).name='ScaleFactorRGB';
+            params(11).validator=@isvector;
         end
         
         function locations = getColorBarLocations()

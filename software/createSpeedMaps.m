@@ -26,7 +26,7 @@ function speedMap=createSpeedMaps(flow,n,corrLength,sampling,pixelSize,imgSize,g
 % Sebastien Besson, June 2011 (last modified March 2012)
 % Adapted from fsmSpeedMaps
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

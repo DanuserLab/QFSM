@@ -1,7 +1,7 @@
 function logic= isvalid(aDouble)
 % Dirty trick to handle isvalid absence in <2013b
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

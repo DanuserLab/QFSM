@@ -22,7 +22,7 @@ function [cands locMax]=detectSpeckles(I,noiseParam,specParam,varargin)
 % A. Ponti et al., Biophysical J., 84 336-3352, 2003.
 % A. Ponti et al., Biophysical J., 89 2459-3469, 2005.
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

@@ -28,6 +28,9 @@ function mainFig = movieViewer(MO,varargin)
 %   and its analysis. If non-zero, set the index of the movie to be
 %   displayed. Default: 0.
 %
+%   showProcTag - logical: displays process tags along with Process names
+%                          for disambiguation.
+%
 % Output:
 %   
 %   mainFig - the handle of the main control interface
@@ -36,7 +39,7 @@ function mainFig = movieViewer(MO,varargin)
 %
 % Sebastien Besson, July 2012 (last modified Nov 2012)
 %
-% Copyright (C) 2017, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
@@ -61,6 +64,7 @@ ip.addRequired('MO',@(x) isa(x,'MovieObject'));
 ip.addOptional('procId',[],@isnumeric);
 ip.addOptional('refresher',[],@isstr);
 ip.addParameter('movieIndex',0,@isscalar);
+ip.addParameter('showProcTag',1,@islogical);
 ip.parse(MO,varargin{:});
 
 if strcmp(ip.Results.refresher, '1') == 1
@@ -130,6 +134,9 @@ graphProcId = validProcId(isGraphProc);
 createProcText= @(panel,i,j,pos,name) uicontrol(panel,'Style','text',...
     'Position',[10 pos 250 20],'Tag',['text_process' num2str(i)],...
     'String',name,'HorizontalAlignment','left','FontWeight','bold');
+createProcTextTag= @(panel,i,j,pos,name) uicontrol(panel,'Style','text',...
+    'Position',[10 pos 250 10],'Tag',['text_processTag' num2str(i)],...
+    'String',name,'HorizontalAlignment','left','FontWeight','normal','FontSize', 7,'ForegroundColor',[0 .45 .74]);
 createOutputText= @(panel,i,j,pos,text) uicontrol(panel,'Style','text',...
     'Position',[40 pos 200 20],'Tag',['text_process' num2str(i) '_output'...
     num2str(j)],'String',text,'HorizontalAlignment','left');
@@ -158,7 +165,7 @@ if isa(userData.MO,'MovieData')
         validOutput = find(strcmp({output.type},'image'));
         for iOutput=validOutput(end:-1:1)
             createOutputText(imagePanel,imageProcId(iProc),iOutput,hPosition,output(iOutput).name);
-            if strcmp({output(iOutput).var},'merged')
+            if strfind(output(iOutput).var,'merged')
                 createProcButton(imagePanel,imageProcId(iProc),iOutput,1,hPosition);
             else
                 arrayfun(@(x) createProcButton(imagePanel,imageProcId(iProc),iOutput,x,hPosition),...
@@ -167,7 +174,15 @@ if isa(userData.MO,'MovieData')
             hPosition=hPosition+20;
         end
         createProcText(imagePanel,imageProcId(iProc),iOutput,hPosition,imageProc{iProc}.name_);
-        hPosition=hPosition+20;
+        
+        % Show process tags for disambiguation
+        if ip.Results.showProcTag
+            createProcTextTag(imagePanel,imageProcId(iProc),iOutput,hPosition+20,imageProc{iProc}.tag_);
+            hPosition=hPosition+35;
+        else
+            hPosition=hPosition+20;
+        end
+
     end
     
     % Create controls for selecting channels (raw image)
@@ -332,6 +347,7 @@ if isa(userData.MO,'MovieData')
             'SliderStep',[1/double(userData.MO.zSize_)  5/double(userData.MO.zSize_)],...
             'Tag','slider_depth','BackgroundColor','white',...
             'Callback',@(h,event) redrawScene(h,guidata(h)));
+%         userData.projectionAxis3D = 'Z'; % defined XY, ZX, or ZY  (Z,Y,X)
     end
     
     %%% 3D slider ends %%%%
@@ -589,7 +605,7 @@ if isequal(props{1}(props{2}), userData.movieIndex),return;end
 if isempty(userData.procId)
    movieViewer(userData.ML,'movieIndex',props{1}(props{2})); 
 else
-movieViewer(userData.ML,userData.procId,'movieIndex',props{1}(props{2}));
+movieViewer(userData.ML,'procId', userData.procId,'movieIndex',props{1}(props{2}));
 end
 
 function size = getPanelSize(hPanel)
@@ -900,6 +916,7 @@ if strcmp(imageTag,'radiobutton_channels')
     chanList=find(arrayfun(@(x)get(x,'Value'),channelBoxes));
     userData.MO.channels_(chanList).draw(frameNr,ZNr,varargin{:});
     displayMethod = userData.MO.channels_(chanList(1)).displayMethod_;
+    projectionAxis3D = 'Z'; % Just default
 else
     set(channelBoxes,'Enable','off');
     % Retrieve the id, process nr and channel nr of the selected imageProc
@@ -910,9 +927,20 @@ else
     output = outputList(iOutput).var;
     iChan = str2double(tokens{1}{3});
     if userData.MO.is3D
-        userData.MO.processes_{procId}.draw(iChan,frameNr, ZNr, 'output',output,varargin{:});
+        userData.MO.processes_{procId}.draw(iChan,frameNr, ZNr, 'output',output, varargin{:});
+        % Check for projected Axis in output name
+        if strfind(output, 'three')
+            projectionAxis3D = 'three';
+        elseif ~isempty(strfind(output,'Z')) && ~isempty(strfind(output, 'Y'))
+            projectionAxis3D = 'X';
+        elseif ~isempty(strfind(output,'Z')) && ~isempty(strfind(output, 'X'))
+            projectionAxis3D = 'Y';
+        else
+            projectionAxis3D = 'Z';
+        end
     else
         userData.MO.processes_{procId}.draw(iChan,frameNr, 'output',output,varargin{:});
+        projectionAxis3D = 'Z';
     end
     displayMethod = userData.MO.processes_{procId}.displayMethod_{iOutput,iChan};
 end
@@ -920,9 +948,12 @@ end
 optFig = findobj(0,'-regexp','Name','Movie options');
 if ~isempty(optFig), 
     userData = get(optFig,'userData');
-    userData.setImageOptions(drawFig, displayMethod)
+    userData.setImageOptions(drawFig, displayMethod);
+    if userData.MO.is3D
+        userData.setProjectionAxis3D(projectionAxis3D)
+    end
 end
-
+redrawOverlays(handles);
 function panZoomCallback(varargin) 
     % Find if options figure exist
 optionsFig = findobj(0,'-regexp','Tag', 'optionsFig');
@@ -1001,9 +1032,9 @@ if get(hObject,'Value')
     if userData.MO.is3D() % && userData.MO.processes_{procId}.is3DP()
         ZNr = get(handles.slider_depth,'Value');
         userData.MO.processes_{procId}.draw(inputArgs{:},'output',output,... % draw method of process object modificiation for 3D!!!
-        options{:},'movieOverlay', movieOverlay,'iZ', ZNr);
+        options{:},'movieOverlay', movieOverlay,'iZ', ZNr);%, 'projectionAxis3D', userData.projectionAxis3D);
     else
-        userData.MO.processes_{procId}.draw(inputArgs{:},'output',output,...
+        userData.MO.processes_{procId}.draw(inputArgs{:},'output', output,...
         options{:},'movieOverlay', movieOverlay);
     end
 else
@@ -1021,12 +1052,12 @@ else
 end
 
 % Get display method and update option status
-if isempty(iChan),
+if isempty(iChan)
     displayMethod = userData.MO.processes_{procId}.displayMethod_{iOutput};
 else
     displayMethod = userData.MO.processes_{procId}.displayMethod_{iOutput,iChan}; %% 3D depth specific process???
 end
-if ~isempty(optFig),
+if ~isempty(optFig)
     userData.setOverlayOptions(displayMethod)
 end
 
