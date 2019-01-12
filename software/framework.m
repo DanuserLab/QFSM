@@ -21,7 +21,7 @@ function [G,W,S,mnWindows]=framework(i,g,w)
 %
 % Aaron Ponti, 2001
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

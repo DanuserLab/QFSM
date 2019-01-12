@@ -27,7 +27,7 @@ function [M,gapList]=trackSpecklesGapCloser(M,threshold,invalidCands,varargin)
 %               gapClosed  : number of gaps closed
 %
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

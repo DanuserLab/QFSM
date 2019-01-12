@@ -25,7 +25,7 @@ function d0=updateD0FromDiv(divM,d0in,alpha,nPi,nPg)
 %                   variation possible for divM.
 %                   d0 has size (nPg x 1).
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

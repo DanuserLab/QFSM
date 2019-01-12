@@ -10,7 +10,7 @@ function speckleArray=buildSpeckleArray(cM,noiseParams,threshold,gapList,cands,i
 %
 % OUTPUT     speckleArray  : structure containing all speckle information extracted from an image stack
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

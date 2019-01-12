@@ -15,7 +15,7 @@ function fImg = locmin2d(img, mask, keepFlat)
 %
 %    OUTPUT   fImg   image with local minima (original values) and zeros elsewhere.
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 

@@ -24,7 +24,7 @@ function [img3C_map img3C_SNR] =createErrorMaps(stack,E,S)
 % Sebastien Besson, June 2011
 % Adapted from fsmVectorAnalysis
 %
-% Copyright (C) 2018, Danuser Lab - UTSouthwestern 
+% Copyright (C) 2019, Danuser Lab - UTSouthwestern 
 %
 % This file is part of QFSM_Package.
 % 
