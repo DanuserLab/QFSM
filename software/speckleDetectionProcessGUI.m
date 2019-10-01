@@ -188,6 +188,12 @@ end
 
 if isempty(userData.crtPackage.processes_{1})
     for i=1:numel(userData.noiseParams)
+        % Add error checking for process 1 is not run and noise model
+        % parameters were not loaded from file. -- Qiongjing (Jenny) Zou, Sep 2019
+        if isempty(str2num(get(handles.(['edit_' userData.noiseParams{i}]),'String')))
+            errordlg('Please provide valid input for ''Noise model parameters ''.','Setting Error','modal');
+            return;
+        end
         funParams.(userData.noiseParams{i}) = ...
             str2num(get(handles.(['edit_' userData.noiseParams{i}]),'String')); %#ok<ST2NM>
     end
